@@ -40,7 +40,8 @@ Node.js
 
 Clone the repository:
 
-git clone https://github.com/YOUR_USERNAME/hangman-react-game.git
+git clone https://github.com/NickIsCoding-Tech/hangman-react-game.git
+
 cd hangman-react-game
 
 ## Install dependencies:
