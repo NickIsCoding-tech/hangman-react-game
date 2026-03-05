@@ -38,9 +38,11 @@ Node.js
 
 # Installation (Run Locally)
 
-Clone the repository:
+Fork this repository
 
-git clone https://github.com/NickIsCoding-Tech/hangman-react-game.git
+Clone your forked repository:
+
+git clone https://github.com/YOURUSERNAME/hangman-react-game.git
 
 cd hangman-react-game
 
