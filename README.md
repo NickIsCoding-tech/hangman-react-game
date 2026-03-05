@@ -1,4 +1,4 @@
-### Hangman Game (React + Docker)
+# Hangman Game (React + Docker)
 
 ## Project Overview
 
