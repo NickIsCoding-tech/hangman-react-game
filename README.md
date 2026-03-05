@@ -36,35 +36,35 @@ Docker
 
 Node.js
 
-## Installation (Run Locally)
+# Installation (Run Locally)
 
 Clone the repository:
 
 git clone https://github.com/YOUR_USERNAME/hangman-react-game.git
 cd hangman-react-game
 
-# Install dependencies:
+## Install dependencies:
 
 npm install
 
-# Start the development server:
+## Start the development server:
 
 npm run dev
 
-# Open the browser at:
+## Open the browser at:
 
 http://localhost:5173
 
-## Running the Application with Docker
+# Running the Application with Docker
 
-# Build the Docker image:
+## Build the Docker image:
 
 docker build -t hangman-game .
 
-# Run the container:
+## Run the container:
 
 docker run -p 5173:5173 hangman-game
 
-# Then open:
+## Then open:
 
 http://localhost:5173
