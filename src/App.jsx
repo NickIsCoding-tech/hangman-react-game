@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import Login from "./Login";
 import "./App.css";
 import HangmanStage from "./components/HangmanStage";
 import WordSlots from "./components/WordSlots";
@@ -17,7 +18,9 @@ export default function App() {
   const [secretWord, setSecretWord] = useState(() => pickNewWord(""));
   const [guessedLetters, setGuessedLetters] = useState([]); 
   const [livesLeft, setLivesLeft] = useState(MAX_LIVES);
-  const [previousWord, setPreviousWord] = useState("");
+  const [currentPlayer, setCurrentPlayer] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [gameRecorded, setGameRecorded] = useState(false);
 
   const guessedUpper = useMemo(
     () => guessedLetters.map((c) => c.toUpperCase()),
@@ -51,11 +54,87 @@ export default function App() {
   };
 
   const startNewGame = () => {
-    setPreviousWord(secretWord);
-    setSecretWord(pickNewWord(secretWord));
-    setGuessedLetters([]);
-    setLivesLeft(MAX_LIVES);
+  setSecretWord(pickNewWord(secretWord));
+  setGuessedLetters([]);
+  setLivesLeft(MAX_LIVES);
+  setGameRecorded(false);
   };
+
+  async function handleLogin(playerName) {
+  try {
+    const response = await fetch(
+      `http://localhost:3001/api/player?playerName=${encodeURIComponent(playerName)}`
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      setCurrentPlayer(data.item);
+      setIsLoggedIn(true);
+      return;
+    }
+
+    if (response.status === 404) {
+      const createResponse = await fetch("http://localhost:3001/api/players", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ playerName }),
+      });
+
+      if (createResponse.ok) {
+        const createData = await createResponse.json();
+        setCurrentPlayer(createData.item);
+        setIsLoggedIn(true);
+      }
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+  }
+}
+
+async function updatePlayerStats(didWin) {
+  if (!currentPlayer) return;
+
+  const updatedPlayer = {
+    ...currentPlayer,
+    wins: didWin ? currentPlayer.wins + 1 : currentPlayer.wins,
+    losses: didWin ? currentPlayer.losses : currentPlayer.losses + 1,
+  };
+
+  const totalGames = updatedPlayer.wins + updatedPlayer.losses;
+  updatedPlayer.winPercentage =
+    totalGames === 0 ? 0 : Number(((updatedPlayer.wins / totalGames) * 100).toFixed(1));
+
+  setCurrentPlayer(updatedPlayer);
+
+  try {
+    await fetch("http://localhost:3001/api/player", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        playerName: updatedPlayer.playerName,
+        wins: updatedPlayer.wins,
+        losses: updatedPlayer.losses,
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to update player stats:", error);
+  }
+}
+
+useEffect(() => {
+  if (!isLoggedIn || !currentPlayer || gameRecorded) return;
+  if (isWin) {
+    updatePlayerStats(true);
+    setGameRecorded(true);
+  } else if (isLose) {
+    updatePlayerStats(false);
+    setGameRecorded(true);
+  }
+}, [isWin, isLose, isLoggedIn, currentPlayer, gameRecorded]);
 
   return (
     <div className="page">
@@ -65,6 +144,18 @@ export default function App() {
           Pick letters to guess the word. Wrong guesses reduce your lives.
         </p>
       </header>
+
+      {!isLoggedIn ? (
+      <Login onLogin={handleLogin} />
+    ) : (
+      <section className="card">
+        <h2 className="cardTitle">Current Player</h2>
+        <p><strong>Name:</strong> {currentPlayer?.playerName}</p>
+        <p><strong>Wins:</strong> {currentPlayer?.wins}</p>
+        <p><strong>Losses:</strong> {currentPlayer?.losses}</p>
+        <p><strong>Win Percentage:</strong> {currentPlayer?.winPercentage}%</p>
+      </section>
+    )}
 
       <section className="topRow">
         <div className="card">
@@ -97,9 +188,6 @@ export default function App() {
             New Game
           </button>
         </div>
-        <p className="muted small">
-          Previous word (for testing): {previousWord ? previousWord : "None yet"}
-        </p>
       </section>
 
       <GamePopup open={isOver} outcome={outcome} word={secretWord} onRestart={startNewGame} />
